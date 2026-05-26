@@ -80,19 +80,25 @@ REQUEST_TIMEOUT=300000             # 5 min request timeout
 
 You will be prompted to set a custom access password. The default is `123456`.
 
-### Step 5: Set Up Auto-Start (LaunchAgent)
+### Step 5: Set Up LaunchAgent (Manual Start Mode)
 
 The script creates `~/Library/LaunchAgents/com.ccx.proxy.plist` with:
 
-- **RunAtLoad=true** — starts CCX automatically when you log in
-- **KeepAlive=true** — restarts CCX if it crashes
+- **RunAtLoad=false** — does NOT start on boot (manual start only)
+- **KeepAlive=true** — if CCX crashes while running, it auto-restarts
 - **WorkingDirectory** — set to the `backend-go` directory
 
-Then loads the service with `launchctl load`.
+The LaunchAgent is **not loaded automatically**. You control CCX manually.
 
 ### Step 6: Start and Verify
 
-The script starts CCX and verifies:
+Start CCX with the management script:
+
+```bash
+bash "<path-to-skill>/scripts/ccx.sh start"
+```
+
+Then verify:
 
 ```bash
 curl -s -o /dev/null -w "%{http_code}" http://localhost:3688/
@@ -116,40 +122,35 @@ Enter the access password you set (default: `123456`).
 
 ## Common Tasks
 
-### Start CCX
+Use the management script for all daily operations:
 
 ```bash
-launchctl start com.ccx.proxy
+# 查看所有命令
+bash "<path-to-skill>/scripts/ccx.sh"
+
+# 启动 CCX
+bash "<path-to-skill>/scripts/ccx.sh start"
+
+# 停止 CCX（彻底关闭，不会自动重启）
+bash "<path-to-skill>/scripts/ccx.sh stop"
+
+# 重启 CCX
+bash "<path-to-skill>/scripts/ccx.sh restart"
+
+# 查看运行状态
+bash "<path-to-skill>/scripts/ccx.sh status"
+
+# 查看日志
+bash "<path-to-skill>/scripts/ccx.sh logs"
+
+# 启用开机自启
+bash "<path-to-skill>/scripts/ccx.sh enable"
+
+# 禁用开机自启
+bash "<path-to-skill>/scripts/ccx.sh disable"
 ```
 
-### Stop CCX
-
-```bash
-launchctl stop com.ccx.proxy
-```
-
-### Check if CCX is Running
-
-```bash
-# Check service status
-launchctl list | grep ccx
-
-# Check port
-curl -s -o /dev/null -w "%{http_code}" http://localhost:3688/
-```
-
-### View Logs
-
-```bash
-# Standard output
-cat /tmp/ccx.stdout.log
-
-# Error output
-cat /tmp/ccx.stderr.log
-
-# Application log
-cat "<install-dir>/backend-go/logs/app.log"
-```
+> **注意**: `ccx.sh stop` 会卸载 LaunchAgent 并杀死进程，实现彻底关闭。下次启动时 `ccx.sh start` 会自动重新加载 LaunchAgent。
 
 ### Update CCX to Latest Version
 
@@ -164,8 +165,7 @@ The script will detect the existing installation and offer to update.
 Edit `backend-go/.env` and change `PROXY_ACCESS_KEY`, then restart:
 
 ```bash
-launchctl stop com.ccx.proxy
-launchctl start com.ccx.proxy
+bash "<path-to-skill>/scripts/ccx.sh restart"
 ```
 
 ### Change Port
@@ -173,15 +173,14 @@ launchctl start com.ccx.proxy
 Edit `backend-go/.env` and change `PORT`, then restart:
 
 ```bash
-launchctl stop com.ccx.proxy
-launchctl start com.ccx.proxy
+bash "<path-to-skill>/scripts/ccx.sh restart"
 ```
 
 ### Uninstall CCX
 
 ```bash
 # 1. Stop and remove LaunchAgent
-launchctl unload ~/Library/LaunchAgents/com.ccx.proxy.plist
+bash "<path-to-skill>/scripts/ccx.sh stop"
 rm ~/Library/LaunchAgents/com.ccx.proxy.plist
 
 # 2. Delete install directory (caution: removes all configs)

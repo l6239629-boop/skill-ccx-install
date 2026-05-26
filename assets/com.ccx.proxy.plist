@@ -13,9 +13,11 @@
     <key>WorkingDirectory</key>
     <string>__INSTALL_DIR__/backend-go</string>
 
+    <!-- 手动启动模式：不随开机自启，需要时通过 ccx.sh start 启动 -->
     <key>RunAtLoad</key>
-    <true/>
+    <false/>
 
+    <!-- 运行期间如果崩溃则自动重启，但不会开机自启 -->
     <key>KeepAlive</key>
     <true/>
 

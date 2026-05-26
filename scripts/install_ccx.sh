@@ -377,7 +377,7 @@ setup_launchagent() {
         ok "已卸载现有 LaunchAgent"
     fi
 
-    # 生成 plist 文件
+    # 生成 plist 文件（手动启动模式：不随开机自启）
     cat > "$plist_dest" << PLISTEOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -394,9 +394,11 @@ setup_launchagent() {
     <key>WorkingDirectory</key>
     <string>${INSTALL_DIR}/backend-go</string>
 
+    <!-- 手动启动模式：不随开机自启，需要时通过 ccx.sh start 启动 -->
     <key>RunAtLoad</key>
-    <true/>
+    <false/>
 
+    <!-- 运行期间如果崩溃则自动重启，但不会开机自启 -->
     <key>KeepAlive</key>
     <true/>
 
@@ -409,15 +411,11 @@ setup_launchagent() {
 </plist>
 PLISTEOF
 
-    ok "LaunchAgent 已创建: ${plist_dest}"
+    ok "LaunchAgent 已创建: ${plist_dest}（手动启动模式）"
 
-    # 加载服务
-    if launchctl load "$plist_dest" 2>&1; then
-        ok "LaunchAgent 已加载（开机自启已启用）"
-    else
-        warn "LaunchAgent 加载失败，请手动加载:"
-        warn "  launchctl load ${plist_dest}"
-    fi
+    # 不自动加载 LaunchAgent，用户需要时通过 ccx.sh start 启动
+    info "提示: 使用以下命令启动 CCX:"
+    info "  bash $(dirname "$0")/ccx.sh start"
     echo ""
 }
 
